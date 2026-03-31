@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String     @id @default(cuid())
+  email       String     @unique
+  password    String
+  role        String     @default("shop_owner")
+  kycStatus   String?    @default("pending")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  products    Product[]
+  logs        StockLog[]
+
+  @@map("users")
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  barcode     String?     @unique
+  imageUrl    String?     @map("image_url")
+  stock       Int         @default(0)
+  threshold   Int         @default(10)
+  price       Float
+  category    String?
+  ownerId     String      @map("owner_id")
+  owner       User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  logs        StockLog[]
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@map("products")
+}
+
+model StockLog {
+  id        String   @id @default(cuid())
+  productId String   @map("product_id")
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  quantity  Int
+  type      String   // 'in', 'out', 'sale', 'adjustment'
+  notes     String?
+  date      DateTime @default(now())
+
+  @@map("stock_logs")
+}

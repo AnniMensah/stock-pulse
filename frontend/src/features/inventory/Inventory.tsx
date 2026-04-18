@@ -1,37 +1,11 @@
-import { useState, useEffect } from 'react'
 import { Product } from '../../types'
 
-const Inventory = () => {
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: '1',
-      name: 'Indomie Instant Noodles 70g',
-      barcode: '1234567890123',
-      stock: 25,
-      threshold: 20,
-      price: 2.5,
-      status: 'yellow' as const
-    },
-    {
-      id: '2',
-      name: 'Voltic Water 500ml',
-      barcode: '9876543210987',
-      stock: 5,
-      threshold: 10,
-      price: 1.0,
-      status: 'red' as const
-    },
-    {
-      id: '3',
-      name: 'Gari 1kg',
-      barcode: '5555555555555',
-      stock: 45,
-      threshold: 10,
-      price: 8.0,
-      status: 'green' as const
-    }
-  ])
+interface InventoryProps {
+  products: Product[];
+  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
+}
 
+const Inventory = ({ products, setProducts }: InventoryProps) => {
   const updateStock = (id: string, delta: number) => {
     setProducts(products.map(p => p.id === id ? {...p, stock: p.stock + delta} : p))
   }

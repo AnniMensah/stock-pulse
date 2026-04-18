@@ -2,8 +2,9 @@ import { useState } from 'react'
 import Scanner from './features/inventory/Scanner'
 import Inventory from './features/inventory/Inventory'
 import Dashboard from './features/dashboard/Dashboard'
+import SignUp from './features/auth/SignUp'
 import { Product } from './types'
-import './App.css'
+import '.'
 
 function App() {
   const [activeTab, setActiveTab] = useState('inventory')
@@ -50,6 +51,7 @@ function App() {
         {activeTab === 'scan' && <Scanner onScanSuccess={handleScanSuccess} />}
         {activeTab === 'inventory' && <Inventory products={products} setProducts={setProducts} />}
         {activeTab === 'dashboard' && <Dashboard />}
+        {activeTab === 'signup' && <SignUp />}
       </main>
 
       <nav className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-md shadow-xl rounded-2xl p-2 flex gap-2">
@@ -70,6 +72,12 @@ function App() {
           className={`p-3 rounded-xl transition-colors ${activeTab === 'dashboard' ? 'bg-emerald-600 text-white shadow-lg' : 'text-emerald-600 hover:bg-emerald-50'}`}
         >
           📊
+        </button>
+        <button 
+          onClick={() => setActiveTab('signup')} 
+          className={`p-3 rounded-xl transition-colors ${activeTab === 'signup' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-50'}`}
+        >
+          👤
         </button>
       </nav>
     </div>

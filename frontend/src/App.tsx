@@ -4,7 +4,6 @@ import Inventory from './features/inventory/Inventory'
 import Dashboard from './features/dashboard/Dashboard'
 import SignUp from './features/auth/SignUp'
 import { Product } from './types'
-import '.'
 
 function App() {
   const [activeTab, setActiveTab] = useState('inventory')
@@ -50,7 +49,7 @@ function App() {
       <main className="p-4">
         {activeTab === 'scan' && <Scanner onScanSuccess={handleScanSuccess} />}
         {activeTab === 'inventory' && <Inventory products={products} setProducts={setProducts} />}
-        {activeTab === 'dashboard' && <Dashboard />}
+        {activeTab === 'dashboard' && <Dashboard products={products} />}
         {activeTab === 'signup' && <SignUp />}
       </main>
 

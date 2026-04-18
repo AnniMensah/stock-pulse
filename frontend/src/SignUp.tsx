@@ -1,7 +1,11 @@
 import { useState, ChangeEvent, FormEvent } from 'react';
 import { User, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Store, Phone } from 'lucide-react';
 
-const SignUp = () => {
+interface SignUpProps {
+  onNavigate: (page: 'signin') => void;
+}
+
+const SignUp = ({ onNavigate }: SignUpProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -146,7 +150,7 @@ const SignUp = () => {
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
-                  name="password"
+                  name="confirmPassword"
                   required
                   className="appearance-none block w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
                   placeholder="confirm password"
@@ -188,7 +192,10 @@ const SignUp = () => {
             </div>
 
             <div className="mt-6">
-              <button className="w-full inline-flex justify-center py-2.5 px-4 border border-slate-200 rounded-lg shadow-sm bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+              <button 
+                type="button"
+                onClick={() => onNavigate('signin')}
+                className="w-full inline-flex justify-center py-2.5 px-4 border border-slate-200 rounded-lg shadow-sm bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                 Sign in instead
               </button>
             </div>

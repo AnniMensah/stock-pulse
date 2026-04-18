@@ -4,6 +4,7 @@ import Inventory from './features/inventory/Inventory'
 import Dashboard from './features/dashboard/Dashboard'
 import SignUp from './features/auth/SignUp'
 import { Product } from './types'
+import './App.css'
 
 function App() {
   const [activeTab, setActiveTab] = useState('inventory')
@@ -70,13 +71,13 @@ function App() {
           onClick={() => setActiveTab('dashboard')} 
           className={`p-3 rounded-xl transition-colors ${activeTab === 'dashboard' ? 'bg-emerald-600 text-white shadow-lg' : 'text-emerald-600 hover:bg-emerald-50'}`}
         >
-          📊
+          📊 Dashboard
         </button>
         <button 
           onClick={() => setActiveTab('signup')} 
           className={`p-3 rounded-xl transition-colors ${activeTab === 'signup' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-50'}`}
         >
-          👤
+          👤 Account
         </button>
       </nav>
     </div>

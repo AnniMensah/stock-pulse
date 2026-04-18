@@ -1,119 +1,40 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import Quagga, { QuaggaJSResultObject } from '@ericblade/quagga2'
-import { Product } from '../../types'
+import React from 'react';
+import { Product } from '../../types';
 
 interface ScannerProps {
-  onScanSuccess?: (product: Product) => void;
+  onScanSuccess: (product: Product) => void;
 }
 
-const Scanner = ({ onScanSuccess }: ScannerProps) => {
-  const [scanning, setScanning] = useState(false)
-  const [result, setResult] = useState<Product | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const scannerRef = useRef<HTMLDivElement>(null)
-
-  const stopScanner = useCallback(() => {
-    try {
-      Quagga.offDetected(handleDetected)
-      Quagga.stop()
-    } catch (e) {
-      console.error("Failed to stop Quagga:", e)
-    }
-    setScanning(false)
-  }, [])
-
-  const handleDetected = useCallback((data: QuaggaJSResultObject) => {
-    if (data?.codeResult?.code) {
-      const newProduct: Product = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: `Scanned Item`,
-        barcode: data.codeResult.code,
-        stock: 1,
-        threshold: 5,
-        price: 0,
-        status: 'yellow'
-      }
-
-      setResult(newProduct)
-      if (onScanSuccess) onScanSuccess(newProduct)
-
-      stopScanner()
-    }
-  }, [stopScanner, onScanSuccess])
-
-  const startScanner = useCallback(() => {
-    if (scanning) return;
-    
-    setResult(null)
-    setError(null)
-
-    if (scannerRef.current) {
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: scannerRef.current,
-          constraints: {
-            width: 480,
-            height: 320,
-            facingMode: "environment"
-          }
-        },
-        decoder: {
-          readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader"]
-        }
-      }, (err) => {
-        if (err) {
-          setError("Camera access denied or not found.")
-          console.error(err)
-        } else {
-          Quagga.onDetected(handleDetected)
-          Quagga.start()
-          setScanning(true)
-        }
-      })
-    }
-  }, [handleDetected, scanning])
-
-  useEffect(() => {
-    return () => {
-      if (scanning) {
-        Quagga.offDetected(handleDetected)
-        Quagga.stop()
-      }
-    }
-  }, [scanning, handleDetected])
+const Scanner: React.FC<ScannerProps> = ({ onScanSuccess }) => {
+  const simulateScan = () => {
+    const mockProduct: Product = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: "New Scanned Item " + Math.floor(Math.random() * 100),
+      barcode: "50123" + Math.floor(Math.random() * 100000),
+      stock: 1,
+      threshold: 5,
+      price: 15.50,
+      status: 'green'
+    };
+    onScanSuccess(mockProduct);
+  };
 
   return (
-    <div className="p-4">
-      <div className="bg-white rounded-2xl p-8 max-w-md mx-auto shadow-2xl">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-          {scanning ? '🔍 Scanning...' : '📷 Scan Barcode'}
-        </h2>
-        
-        <div ref={scannerRef} className="w-full rounded-xl shadow-lg mb-4 overflow-hidden relative" />
-        
-        {error && (
-          <p className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 text-center">{error}</p>
-        )}
-        
-        <div className="flex gap-4 justify-center">
-          <button 
-            onClick={scanning ? stopScanner : startScanner}
-            className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-semibold shadow-lg hover:bg-emerald-700"
-          >
-            {scanning ? 'Stop' : 'Start Scan'}
-          </button>
-        </div>
-        
-        {result && (
-          <div className="mt-6 p-4 bg-green-50 rounded-xl border border-green-200">
-            <p className="font-bold text-lg">{result.name}</p>
-            <p className="text-sm text-green-700">Barcode: {result.barcode}</p>
-          </div>
-        )}
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
+      <div className="w-64 h-64 border-4 border-dashed border-emerald-300 rounded-3xl flex items-center justify-center mb-8 relative overflow-hidden bg-white shadow-inner">
+        <div className="absolute inset-0 bg-emerald-500/5 animate-pulse" />
+        <span className="text-6xl">📷</span>
       </div>
+      <h2 className="text-2xl font-bold text-gray-800 mb-2">Scanner Ready</h2>
+      <p className="text-gray-500 mb-8 max-w-xs">Simulate a barcode scan to add items to your inventory.</p>
+      <button 
+        onClick={simulateScan}
+        className="bg-emerald-600 text-white px-10 py-4 rounded-2xl font-bold shadow-lg hover:bg-emerald-700 transform transition-all active:scale-95"
+      >
+        Simulate Scan
+      </button>
     </div>
-  )
-}
-export default Scanner
+  );
+};
+
+export default Scanner;

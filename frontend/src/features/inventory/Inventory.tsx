@@ -1,50 +1,48 @@
-import { Product } from '../../types'
+import React from 'react';
+import { Product } from '../../types';
 
 interface InventoryProps {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
 }
 
-const Inventory = ({ products, setProducts }: InventoryProps) => {
-  const updateStock = (id: string, delta: number) => {
-    setProducts(products.map(p => p.id === id ? {...p, stock: p.stock + delta} : p))
-  }
-
+const Inventory: React.FC<InventoryProps> = ({ products }) => {
   return (
-    <div>
-      <h2 className="text-3xl font-bold text-gray-900 mb-8">📦 Inventory</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map(product => (
-          <div key={product.id} className="product-card">
-            <div className={`traffic-light ${product.status}`}>
-              {product.status.toUpperCase()}
+    <div className="pb-24">
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900">📦 Inventory</h2>
+        <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm font-bold">
+          {products.length} Items Total
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        {products.map((product) => (
+          <div key={product.id} className="product-card flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-gray-800">{product.name}</h3>
+                {product.stock <= product.threshold && (
+                  <span className="animate-pulse bg-red-100 text-red-600 text-[10px] uppercase px-2 py-0.5 rounded font-black">Low</span>
+                )}
+              </div>
+              <p className="text-sm text-gray-400 font-mono">{product.barcode}</p>
+              <p className="mt-2 font-bold text-emerald-600 text-lg">GH₵ {product.price.toFixed(2)}</p>
             </div>
-            <h3 className="text-xl font-bold mt-4 mb-2">{product.name}</h3>
-            <p className="text-3xl font-bold text-emerald-600 mb-4">GH₵{product.price}</p>
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-2xl font-mono">{product.stock}</span>
-              <span className="text-sm text-gray-500">Thresh: {product.threshold}</span>
-            </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => updateStock(product.id, 1)}
-                className="flex-1 bg-green-600 text-white py-2 px-4 rounded-xl font-medium hover:bg-green-700"
-              >
-                +1
-              </button>
-              <button 
-                onClick={() => updateStock(product.id, -1)}
-                className="flex-1 bg-red-600 text-white py-2 px-4 rounded-xl font-medium hover:bg-red-700"
-              >
-                -1
-              </button>
+
+            <div className="flex items-center gap-6">
+              <div className={`traffic-light ${
+                product.stock === 0 ? 'traffic-light-red' : 
+                product.stock <= product.threshold ? 'traffic-light-amber' : 'traffic-light-green'
+              }`}>
+                {product.stock}
+              </div>
             </div>
           </div>
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Inventory
+export default Inventory;

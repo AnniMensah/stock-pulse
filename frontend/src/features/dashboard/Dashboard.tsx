@@ -1,8 +1,16 @@
-const Dashboard = () => {
+import { Product } from '../../types'
+
+interface DashboardProps {
+  products: Product[]
+}
+
+const Dashboard = ({ products }: DashboardProps) => {
+  const lowStockItems = products.filter(p => p.stock <= p.threshold);
+
   const stats = [
     { label: 'Today Sales', value: 'GH₵125.50', change: '+12%', color: 'emerald' },
-    { label: 'Low Stock Items', value: '3', change: '-1', color: 'yellow' },
-    { label: 'Total Products', value: '47', change: '+2', color: 'blue' }
+    { label: 'Low Stock Items', value: lowStockItems.length.toString(), change: 'Action required', color: 'yellow' },
+    { label: 'Total Products', value: products.length.toString(), change: 'Live', color: 'blue' }
   ]
 
   return (
@@ -24,14 +32,15 @@ const Dashboard = () => {
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
         <h3 className="text-xl font-bold mb-6">Reorder List</h3>
         <ul className="space-y-2">
-          <li className="flex justify-between py-3 px-4 bg-red-50 rounded-xl border border-red-200">
-            <span>Voltic Water</span>
-            <span className="font-bold text-red-600">5 pcs</span>
-          </li>
-          <li className="flex justify-between py-3 px-4 bg-yellow-50 rounded-xl border border-yellow-200">
-            <span>Indomie Noodles</span>
-            <span className="font-bold text-yellow-600">25 pcs</span>
-          </li>
+          {lowStockItems.map(product => (
+            <li key={product.id} className="flex justify-between py-3 px-4 bg-red-50 rounded-xl border border-red-200">
+              <span>{product.name}</span>
+              <span className="font-bold text-red-600">{product.stock} pcs</span>
+            </li>
+          ))}
+          {lowStockItems.length === 0 && (
+            <p className="text-gray-500 italic">All stock levels are healthy! 🎉</p>
+          )}
         </ul>
       </div>
     </div>

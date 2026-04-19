@@ -1,54 +1,44 @@
+// This is your Prisma schema file
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // Or your preferred DB provider
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id          String     @id @default(cuid())
-  email       String     @unique
-  password    String
-  role        String     @default("shop_owner")
-  kycStatus   String?    @default("pending")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-  products    Product[]
-  logs        StockLog[]
-
-  @@map("users")
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  role      String    @default("shop_owner")
+  kycStatus String    @default("pending")
+  products  Product[]
+  createdAt DateTime  @default(now())
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  name        String
-  barcode     String?     @unique
-  imageUrl    String?     @map("image_url")
-  stock       Int         @default(0)
-  threshold   Int         @default(10)
-  price       Float
-  category    String?
-  ownerId     String      @map("owner_id")
-  owner       User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  logs        StockLog[]
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-
-  @@map("products")
+  id        Int      @id @default(autoincrement())
+  name      String
+  category  String
+  stock     Int
+  price     Float
+  barcode   String?
+  threshold Int      @default(5)
+  ownerId   String?
+  owner     User?    @relation(fields: [ownerId], references: [id])
+  sales     Sale[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model StockLog {
-  id        String   @id @default(cuid())
-  productId String   @map("product_id")
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id])
-  quantity  Int
-  type      String   // 'in', 'out', 'sale', 'adjustment'
-  notes     String?
-  date      DateTime @default(now())
-
-  @@map("stock_logs")
+model Sale {
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  product     Product  @relation(fields: [productId], references: [id])
+  amount      Float
+  description String
+  timestamp   DateTime @default(now())
 }

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Package, 
@@ -12,114 +13,292 @@ import {
   ChevronRight,
   LogOut,
   Volume2,
-  Languages,
-  Settings,
+  Settings as SettingsIcon,
   Menu,
-  X
+  X,
+  User
 } from 'lucide-react';
+import InventoryTable from './components/InventoryTable';
+import SettingsPanel from './components/SettingsPanel';
+
+interface DashboardHomeProps {
+  stats: any[];
+  inventory: any[];
+  activities: any[];
+  onRecordSale: (itemId: number) => void;
+}
+
+const DashboardHome: React.FC<DashboardHomeProps> = ({ stats, inventory, activities, onRecordSale }) => {
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {stats.map((stat, idx) => (
+          <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className={`${stat.bg} ${stat.color} p-3 rounded-xl`}>
+                <stat.icon size={24} />
+              </div>
+              <span className={`text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 ${
+                stat.change.startsWith('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+              }`}>
+                {stat.change.startsWith('+') ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                {stat.change}
+              </span>
+            </div>
+            <h3 className="text-slate-500 text-xs font-bold uppercase tracking-widest">{stat.title}</h3>
+            <p className="text-3xl font-black text-slate-900 mt-1">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-slate-50 flex items-center justify-between">
+            <h2 className="font-bold text-slate-800 flex items-center gap-2">
+              <Clock size={18} className="text-indigo-500" /> Latest Changes
+            </h2>
+            <button className="text-indigo-600 text-sm font-bold flex items-center gap-1">
+              View All <ChevronRight size={16} />
+            </button>
+          </div>
+          <div className="p-4">
+            {activities.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 font-medium">
+                No recent activity to show for today.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activities.map((activity, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center">
+                        <TrendingUp size={16} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">{activity.description}</p>
+                        <p className="text-xs text-slate-400">{activity.time}</p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold text-emerald-600">+{activity.amount}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <h2 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <AlertTriangle size={18} className="text-amber-500" /> Items Finishing
+          </h2>
+          <div className="space-y-4">
+            {inventory.filter((i: any) => i.stock < 5).slice(0, 3).map((item: any, idx: number) => (
+              <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-lg shadow-sm flex items-center justify-center text-lg">📦</div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{item.name}</p>
+                    <p className={`text-xs font-bold ${item.stock === 0 ? 'text-rose-600' : 'text-amber-600'}`}>
+                      {item.stock} left
+                    </p>
+                  </div>
+                </div>
+                {item.stock > 0 && (
+                  <button 
+                    onClick={() => onRecordSale(item.id)}
+                    className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors">
+                    Sell
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
 interface DashboardProps {
   onLogout: () => void;
 }
 
-const Dashboard = ({ onLogout }: DashboardProps) => {
-  const [selectedLang, setSelectedLang] = useState<'en' | 'akan' | 'ewe' | 'ga'>('en');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+const apiKey = ""; // Environment provided key
 
-  // Simplified translation map for audio feedback
-  const translations = {
-    en: {
-      shopToday: "My Shop Today",
-      totalItems: "Total Items",
-      finishedLow: "Finished or Low",
-      moneyMade: "Money Made",
-      totalValue: "Total Value",
-      findItem: "Find item",
-      addItem: "Add Item",
-      dashboard: "Dashboard",
-      inventory: "Inventory",
-      settings: "Settings",
-      logout: "Logout"
-    },
-    akan: {
-      shopToday: "Me dwasuo nnɛ",
-      totalItems: "Nneɛma dodoɔ",
-      finishedLow: "Ewie anaa ɛrehia",
-      moneyMade: "Sika a manya",
-      totalValue: "Boɔ a ɛsom",
-      findItem: "Hwehwɛ adeɛ",
-      addItem: "Fa bi ka ho",
-      dashboard: "Dwasuo Titiri",
-      inventory: "Nneɛma Korabea",
-      settings: "Mpahyeɛ",
-      logout: "Pue firi mu"
-    },
-    ewe: {
-      shopToday: "Nye dɔwɔƒe egbe",
-      totalItems: "Nuwo katã",
-      finishedLow: "E vɔ alo esu dza",
-      moneyMade: "Ga si mekpɔ",
-      totalValue: "Asixɔxɔ katã",
-      findItem: "Di nu",
-      addItem: "Tsɔe kpee",
-      dashboard: "Dɔwɔƒe",
-      inventory: "Nuwo siwo le asime",
-      settings: "Ðoɖowo",
-      logout: "Do le eme"
-    },
-    ga: {
-      shopToday: "Mi jua lɛ nɛ",
-      totalItems: "Nii fɛɛ",
-      finishedLow: "Egbe loo eeshe",
-      moneyMade: "Shika ni minine",
-      totalValue: "Jua ni eyɔɔ",
-      findItem: "Tao nii",
-      addItem: "Ke fɛɛ fata he",
-      dashboard: "Nitsumɔ he",
-      inventory: "Nii ni yɔɔ jua lɛ mli",
-      settings: "Toigbelemɔi",
-      logout: "Je kpo"
+const Dashboard = ({ onLogout }: DashboardProps) => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+  const [, setIsSpeaking] = useState(false);
+  const [selectedLang] = useState<'en' | 'akan' | 'ewe' | 'ga'>('en');
+
+  const [inventory, setInventory] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/stock');
+        if (response.ok) {
+          const data = await response.json();
+          setInventory(data);
+        }
+      } catch (error) {
+        console.error("Error fetching inventory:", error);
+      }
+    };
+    fetchInventory();
+  }, []);
+
+  const [moneyMade, setMoneyMade] = useState(42500);
+  const [activities, setActivities] = useState<any[]>([]);
+
+  const translations: any = {
+    en: { dashboard: 'Dashboard', lowStock: 'Low Stock', moneyMade: 'Money Made', totalValue: 'Total Value', summary: 'Summary', logout: 'Logout', addItem: 'Add Item', findItem: 'Find items...', shopToday: 'My Shop Today' },
+    akan: { dashboard: 'Kyerɛwfo', lowStock: 'Nneɛma a Asa', moneyMade: 'Sika a Yɛanya', totalValue: 'Nneɛma nyinaa bo', summary: 'Nsɛm Tiawa', logout: 'Pue', addItem: 'Fa bi ka ho', findItem: 'Hwehwɛ nneɛma...', shopToday: 'Me Dwumadi nnɛ' },
+    ewe: { dashboard: 'Dɔwɔƒe', lowStock: 'Nu siwo vɔ kloe', moneyMade: 'Ga si wokpɔ', totalValue: 'Nuawo katã ƒe home', summary: 'Kpuotɔ', logout: 'Do le eme', addItem: 'Tsɔ nane kpee', findItem: 'Di nuwo...', shopToday: 'Nye fiasã egbe' },
+    ga: { dashboard: 'Nitsumɔhe', lowStock: 'Nii ni egbe kɛ', moneyMade: 'Shika ni agbe', totalValue: 'Nii fɛɛ ajã', summary: 'Kukuotsoo', logout: 'Je kpo', addItem: 'Ke eko afata he', findItem: 'Tao nii...', shopToday: 'Mi fiashe ŋmɛnɛ' }
+  };
+
+  const handleSpeak = (key: string) => {
+    const text = translations[selectedLang][key] || key;
+    generateAndSpeakSummary({ name: selectedLang, id: selectedLang, native: text });
+  };
+
+  const handleRecordSale = async (itemId: number) => {
+    const item = inventory.find(i => i.id === itemId);
+    if (!item || item.stock <= 0) return;
+
+    try {
+      const response = await fetch('http://localhost:5000/api/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: itemId }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update local state with the confirmed data from the server
+        setInventory(prev => prev.map(i => i.id === itemId ? data.product : i));
+        setMoneyMade(prev => prev + data.sale.amount);
+        
+        const newActivity = {
+          description: data.sale.description,
+          amount: `GH₵ ${data.sale.amount}`,
+          time: new Date(data.sale.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setActivities(prev => [newActivity, ...prev].slice(0, 5));
+      }
+    } catch (error) {
+      console.error("Failed to record sale:", error);
     }
   };
 
-  const handleSpeak = (key: keyof typeof translations.en, extraText?: string) => {
-    const text = translations[selectedLang][key] + (extraText ? `. ${extraText}` : "");
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // We attempt to set the rate slightly slower for better clarity
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    
-    window.speechSynthesis.cancel(); // Stop current speech
-    window.speechSynthesis.speak(utterance);
-  };
-
-  // Mock data for the dashboard
   const stats = [
-    { id: 'totalItems', title: 'Total Items', value: '1,284', change: '+12%', icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { id: 'finishedLow', title: 'Finished / Low', value: '14', change: '-2', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { id: 'moneyMade', title: 'Money Made', value: 'GH₵ 42,500', change: '+18.5%', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { id: 'totalValue', title: 'Total Value', value: 'GH₵ 124,000', change: '+5.4%', icon: LayoutDashboard, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-  ];
-
-  const recentActivity = [
-    { id: 1, action: 'Restocked', item: 'Wireless Headphones', user: 'Admin', time: '2h ago', qty: '+50', img: '🎧', akan: 'Wahyɛ mu foforɔ' },
-    { id: 2, action: 'Sale', item: 'Smart Watch', user: 'POS-01', time: '4h ago', qty: '-1', img: '⌚', akan: 'Watɔn' },
-    { id: 3, action: 'Adjustment', item: 'USB-C Cables', user: 'Manager', time: 'Yesterday', qty: '-5', img: '🔌', akan: 'Wasesa mu' },
-    { id: 4, action: 'New Product', item: 'Keyboard', user: 'Admin', time: 'Yesterday', qty: '0', img: '⌨️', akan: 'Ade foforɔ' },
+    { id: 'totalItems', title: 'Total Items', value: inventory.reduce((acc, curr) => acc + curr.stock, 0).toLocaleString(), change: '+12%', icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { id: 'finishedLow', title: 'Finished / Low', value: inventory.filter(i => i.stock < 5).length.toString(), change: '-2', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { id: 'moneyMade', title: 'Money Made', value: `GH₵ ${moneyMade.toLocaleString()}`, change: '+18.5%', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { id: 'totalValue', title: 'Total Value', value: `GH₵ ${inventory.reduce((acc, curr) => acc + (curr.price * curr.stock), 0).toLocaleString()}`, change: '+5.4%', icon: LayoutDashboard, color: 'text-indigo-600', bg: 'bg-indigo-50' },
   ];
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'inventory', label: 'Inventory', icon: Package },
-    { id: 'addItem', label: 'Add Item', icon: Plus },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
 
+  const languages = [
+    { id: 'en', name: 'English', native: 'English' },
+    { id: 'akan', name: 'Akan Twi', native: 'Twi' },
+    { id: 'ewe', name: 'Ewe', native: 'Eʋegbe' },
+    { id: 'ga', name: 'Ga', native: 'Ga' }
+  ];
+
+  const playPCM = (base64Data: string) => {
+    try {
+      const binaryString = atob(base64Data);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+
+      const sampleRate = 24000;
+      const buffer = new ArrayBuffer(44 + bytes.length);
+      const view = new DataView(buffer);
+      const writeString = (offset: number, string: string) => {
+        for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+      };
+      writeString(0, 'RIFF');
+      view.setUint32(4, 36 + bytes.length, true);
+      writeString(8, 'WAVE');
+      writeString(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeString(36, 'data');
+      view.setUint32(40, bytes.length, true);
+      new Uint8Array(buffer, 44).set(bytes);
+
+      const blob = new Blob([buffer], { type: 'audio/wav' });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onended = () => setIsSpeaking(false);
+      audio.onerror = () => setIsSpeaking(false);
+      audio.play();
+    } catch (e) {
+      console.error("Audio playback error:", e);
+      setIsSpeaking(false);
+    }
+  };
+
+  const generateAndSpeakSummary = async (lang: { name: string; id: string; native: string }) => {
+    setIsLanguageModalOpen(false);
+    setIsSpeaking(true);
+
+    const totalValue = inventory.reduce((acc, curr) => acc + (curr.price * curr.stock), 0);
+    const lowStockCount = inventory.filter(i => i.stock < 5).length;
+
+    const summaryPrompt = `
+      Please provide a spoken business summary in ${lang.name} for a shop owner. 
+      The summary should include:
+      1. Total items in stock: ${inventory.reduce((acc, curr) => acc + curr.stock, 0)}.
+      2. Number of items low or finished: ${lowStockCount}.
+      3. Total money made today: ${moneyMade} Ghana Cedis.
+      4. Total shop inventory value: ${totalValue} Ghana Cedis.
+      Make it sound encouraging and professional.
+    `;
+
+    const fetchTTS = async () => {
+      try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: summaryPrompt }] }],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } } }
+          }
+        })
+      });
+
+      const result = await response.json();
+      const audioData = result.candidates[0].content.parts[0].inlineData.data;
+      playPCM(audioData);
+    } catch (error) {
+      console.error("TTS Error:", error);
+      setIsSpeaking(false);
+    }
+  };
+  fetchTTS();
+};
+
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden relative">
       {/* Sidebar - Desktop */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           <div className="p-6 flex items-center justify-between border-b border-slate-50">
             <div className="flex items-center gap-2 text-indigo-600 font-bold text-xl">
@@ -130,20 +309,20 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </button>
           </div>
 
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+  <nav className="flex-1 p-4 space-y-2">
             {menuItems.map((item) => (
-              <div key={item.id} className="group flex items-center justify-between p-3 rounded-xl hover:bg-indigo-50 transition-colors cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <item.icon className="text-slate-400 group-hover:text-indigo-600 transition-colors" size={20} />
-                  <span className="font-bold text-slate-600 group-hover:text-indigo-700">{translations[selectedLang][item.id as keyof typeof translations.en]}</span>
-                </div>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleSpeak(item.id as any); }}
-                  className="p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all shadow-sm"
-                >
-                  <Volume2 size={16} />
-                </button>
-              </div>
+              <button 
+                key={item.id} 
+                onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 group ${
+                  activeTab === item.id 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
+                    : 'text-slate-500 hover:bg-slate-50'
+                }`}
+              >
+                <item.icon className={activeTab === item.id ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500'} size={20} />
+                <span className="font-bold">{item.label}</span>
+              </button>
             ))}
           </nav>
 
@@ -162,36 +341,24 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Navigation Bar */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap justify-between items-center sticky top-0 z-10 gap-4">
+        <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-slate-500">
               <Menu size={24} />
             </button>
-            <div className="hidden md:block">
-              {/* Empty placeholder to balance layout on desktop if needed, or put breadcrumbs here */}
-            </div>
+            <h1 className="text-xl font-bold text-slate-800 capitalize">
+              {activeTab === 'dashboard' ? 'My Shop Today' : activeTab}
+            </h1>
           </div>
           
-          {/* Language Selector */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-lg">
-            <Languages size={18} className="mx-2 text-slate-500" />
-            {(['en', 'akan', 'ewe', 'ga'] as const).map((lang) => (
-              <button
-                key={lang}
-                onClick={() => setSelectedLang(lang)}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
-                  selectedLang === lang 
-                  ? 'bg-white text-indigo-600 shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                {lang.toUpperCase()}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 text-slate-600 text-sm font-medium">
-            {/* User profile or status can go here */}
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 p-2 bg-slate-50 rounded-xl px-4 border border-slate-100">
+               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+               <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">System Online</span>
+            </div>
+            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 font-bold border border-indigo-100">
+               <User size={20} />
+            </div>
           </div>
         </header>
 
@@ -239,117 +406,64 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                     {stat.change}
                   </span>
                 </div>
-                <button 
-                  onClick={() => handleSpeak(stat.id as any, stat.value)}
-                  className="flex items-center gap-2 text-left"
-                >
-                  <h3 className="text-slate-500 text-sm font-bold uppercase tracking-wider">{translations[selectedLang][stat.id as keyof typeof translations.en]}</h3>
-                  <Volume2 size={14} className="text-slate-300" />
-                </button>
+                <h3 className="text-slate-500 text-xs font-bold uppercase tracking-widest">{stat.title}</h3>
                 <p className="text-3xl font-black text-slate-900 mt-1">{stat.value}</p>
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Recent Activity Table */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="p-5 border-b border-slate-50 flex items-center justify-between">
-                <h2 className="font-bold text-slate-800 flex items-center gap-2">
-                  <Clock size={18} className="text-indigo-500" />
-                  Latest Changes
-                </h2>
-                <button className="text-indigo-600 text-sm font-semibold hover:text-indigo-700 flex items-center gap-1">
-                  View All <ChevronRight size={16} />
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                      <th className="px-6 py-3 font-semibold">Action</th>
-                      <th className="px-6 py-3 font-semibold">Item</th>
-                      <th className="px-6 py-3 font-semibold">User</th>
-                      <th className="px-6 py-3 font-semibold">Change</th>
-                      <th className="px-6 py-3 font-semibold">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {recentActivity.map((log) => (
-                      <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <span className={`text-xs font-medium px-2 py-1 rounded-md ${
-                            log.action === 'Sale' ? 'bg-blue-50 text-blue-700' : 
-                            log.action === 'Restocked' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-700'
-                          }`}>
-                            {log.action}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl bg-slate-100 w-10 h-10 flex items-center justify-center rounded-lg">{log.img}</span>
-                            <span className="text-sm font-bold text-slate-900">{log.item}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-600">{log.user}</td>
-                        <td className={`px-6 py-4 text-sm font-bold ${
-                          log.qty.startsWith('+') ? 'text-emerald-600' : log.qty.startsWith('-') ? 'text-rose-600' : 'text-slate-400'
-                        }`}>
-                          {log.qty}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-400">{log.time}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Quick Insights / Low Stock */}
-            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
-              <h2 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-                <AlertTriangle size={18} className="text-amber-500" />
-                Items Finishing
-              </h2>
-              <div className="space-y-4">
-                {[
-                  { name: 'iPhone Case', stock: 3, limit: 10, img: '📱' },
-                  { name: 'Speaker', stock: 1, limit: 5, img: '🔊' },
-                  { name: 'Laptop Stand', stock: 0, limit: 8, img: '💻' },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl bg-white p-2 rounded-md shadow-sm">{item.img}</span>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">{item.name}</p>
-                        <p className={`text-xs font-bold ${item.stock === 0 ? 'text-rose-600' : 'text-amber-600'}`}>
-                          {item.stock} left
-                        </p>
-                      </div>
-                    </div>
-                    <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full ${item.stock === 0 ? 'bg-rose-500' : 'bg-amber-500'}`} 
-                        style={{ width: `${(item.stock / item.limit) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <button className="w-full mt-6 py-2 border border-indigo-100 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-50 transition-colors">
-                Manage Alerts
-              </button>
-            </div>
-          </div>
+          {activeTab === 'dashboard' && (
+            <DashboardHome 
+              stats={stats} 
+              inventory={inventory} 
+              activities={activities}
+              onRecordSale={handleRecordSale} 
+            />
+          )}
+          {activeTab === 'inventory' && <InventoryTable />}
+          {activeTab === 'settings' && <SettingsPanel />}
         </main>
       </div>
 
-      {/* Sidebar Overlay for Mobile */}
+      {/* Language Selection Modal */}
+      {isLanguageModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsLanguageModalOpen(false)} />
+          <div className="bg-white rounded-3xl w-full max-w-md relative shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 bg-indigo-600 text-white text-center">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Volume2 size={32} />
+              </div>
+              <h2 className="text-2xl font-bold">Listen to Summary</h2>
+              <p className="opacity-80">Choose your preferred language</p>
+            </div>
+            
+            <div className="p-6 grid grid-cols-2 gap-4">
+              {languages.map((lang) => (
+                <button
+                  key={lang.id}
+                  onClick={() => generateAndSpeakSummary(lang)}
+                  className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
+                >
+                  <span className="text-2xl font-black text-slate-800 group-hover:text-indigo-600">{lang.native}</span>
+                  <span className="text-sm text-slate-400 group-hover:text-indigo-400">{lang.name}</span>
+                </button>
+              ))}
+            </div>
+            
+            <button 
+              onClick={() => setIsLanguageModalOpen(false)}
+              className="w-full p-4 text-slate-400 font-bold hover:text-slate-600 transition-colors border-t border-slate-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sidebar Overlay */}
       {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur-sm"
-          onClick={() => setIsSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
       )}
     </div>
   );

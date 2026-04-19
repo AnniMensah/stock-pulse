@@ -1,13 +1,9 @@
-# Project Progress for stock-pulse
+# TODO: Fix TypeScript rootDir Error for Prisma Seed
 
-Backend: Complete ✅ (structure, Prisma, stubs)
+## Steps:
+- [x] 1. Confirm edit plan with user (excluding prisma/seed.ts from tsconfig.json)
+- [ ] 2. Edit backend/tsconfig.json to exclude "prisma/seed.ts"
+- [ ] 3. Verify no TypeScript errors: cd backend && npx tsc --noEmit
+- [ ] 4. Test Prisma seed: cd backend && npx prisma db seed
+- [ ] 5. Mark task complete
 
-Frontend Plan:
-- Create frontend/package.json
-- Create frontend/vite.config.ts
-- Create frontend/tailwind.config.js
-- Create frontend/src/main.tsx, App.tsx
-- Stub components/features
-- npm install && dev
-
-Updated.
